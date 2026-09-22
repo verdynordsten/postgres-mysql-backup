@@ -1,0 +1,42 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: run self-test (mocked binaries)
+        run: bash tests/test.sh
+  live-backup:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: app, POSTGRES_PASSWORD: secret, POSTGRES_DB: app }
+        ports: ["5432:5432"]
+        options: --health-cmd="pg_isready -U app" --health-interval=5s --health-retries=10
+      mysql:
+        image: mysql:8
+        env: { MYSQL_ROOT_PASSWORD: secret, MYSQL_DATABASE: app, MYSQL_USER: app, MYSQL_PASSWORD: secret }
+        ports: ["3306:3306"]
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psecret" --health-interval=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: seed data
+        run: |
+          PGPASSWORD=secret psql -h 127.0.0.1 -U app -d app -c "CREATE TABLE t(id serial primary key, v text); INSERT INTO t(v) VALUES ('a'),('b'),('c');"
+          mysql -h 127.0.0.1 -uroot -psecret -e "CREATE TABLE app.t(id INT AUTO_INCREMENT PRIMARY KEY, v VARCHAR(16)); INSERT INTO app.t(v) VALUES ('a'),('b');"
+      - name: backup both
+        run: |
+          export PGDATABASE=app PGUSER=app PGPASSWORD=secret MYSQL_DATABASE=app MYSQL_USER=root MYSQL_PASSWORD=secret BACKUP_DIR=./backups
+          sudo apt-get install -y -q postgresql-client mysql-client >/dev/null 2>&1 || true
+          ./scripts/pg-backup.sh && ./scripts/mysql-backup.sh
+      - name: restore into scratch + compare counts
+        run: |
+          export PGDATABASE=app PGUSER=app PGPASSWORD=secret MYSQL_DATABASE=app MYSQL_USER=root MYSQL_PASSWORD=secret
+          PGPASSWORD=secret psql -h 127.0.0.1 -U app -d app -c "CREATE DATABASE drill;"
+          mysql -h 127.0.0.1 -uroot -psecret -e "CREATE DATABASE drill;"
+          ./scripts/pg-restore.sh "$(ls -t backups/app-*.sql.gz | head -1)" drill --yes
+          SRC=$(PGPASSWORD=secret psql -h 127.0.0.1 -U app -d app -tAc "SELECT count(*) FROM t;")
+          DST=$(PGPASSWORD=secret psql -h 127.0.0.1 -U app -d drill -tAc "SELECT count(*) FROM t;")
+          echo "pg rows src=$SRC drill=$DST"; test "$SRC" = "$DST"

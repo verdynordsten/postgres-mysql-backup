@@ -1,0 +1,6 @@
+# nightly backups + weekly restore drill
+0 2 * * * cd /opt/postgres-mysql-backup && ./scripts/pg-backup.sh >> /var/log/pg-backup.log 2>&1
+15 2 * * * cd /opt/postgres-mysql-backup && ./scripts/mysql-backup.sh >> /var/log/mysql-backup.log 2>&1
+30 2 * * * cd /opt/postgres-mysql-backup && ./scripts/rotate.sh ./backups 14 >> /var/log/backup-rotate.log 2>&1
+# weekly drill: restore latest pg backup into scratch db and row-count it
+0 4 * * 0 cd /opt/postgres-mysql-backup && LATEST=$(ls -t backups/*.sql.gz | head -1) && ./scripts/pg-restore.sh "$LATEST" drill_restore --yes
