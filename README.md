@@ -40,3 +40,10 @@ Restore drill (proves the backup is not decoration):
 
 `.github/workflows/ci.yml` spins up real Postgres 16 + MySQL 8 services,
 runs backup → restore → row-count comparison, then the self-test.
+
+## Evidence (real run)
+
+![backup-verify](docs/screenshots/shot-backup-verify.png)
+![logwatch](docs/screenshots/shot-logwatch.png)
+
+Plus live CI: every push runs real backup → restore → row-count on Postgres 16 + MySQL 8 (see Actions tab).
