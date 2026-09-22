@@ -10,7 +10,7 @@ BACKUP_DIR="${BACKUP_DIR:-./backups}"
 mkdir -p "$BACKUP_DIR"
 
 TS="$(date +%Y%m%d-%H%M%S)"
-OUT="$BACKUP_DIR/${PGDATABASE}-${TS}.sql.gz"
+OUT="$BACKUP_DIR/pg-${PGDATABASE}-${TS}.sql.gz"
 
 export PGHOST="${PGHOST:-127.0.0.1}" PGPORT="${PGPORT:-5432}"
 export PGUSER="${PGUSER:?set PGUSER}" PGPASSWORD="${PGPASSWORD:?set PGPASSWORD}"

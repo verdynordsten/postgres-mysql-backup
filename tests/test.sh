@@ -23,8 +23,8 @@ export PATH="$MOCK:$PATH"
 export PGDATABASE=t1 PGUSER=u PGPASSWORD=p MYSQL_DATABASE=t2 MYSQL_USER=u MYSQL_PASSWORD=p BACKUP_DIR=./backups
 ./scripts/pg-backup.sh >/dev/null && ok "pg-backup runs" || bad "pg-backup runs"
 ./scripts/mysql-backup.sh >/dev/null && ok "mysql-backup runs" || bad "mysql-backup runs"
-ls backups/t1-*.sql.gz backups/t2-*.sql.gz >/dev/null 2>&1 && ok "both backups created" || bad "backups created"
-f=$(ls backups/t1-*.sql.gz | head -1)
+ls backups/pg-t1-*.sql.gz backups/mysql-t2-*.sql.gz >/dev/null 2>&1 && ok "both backups created" || bad "backups created"
+f=$(ls backups/pg-t1-*.sql.gz | head -1)
 sha256sum -c "${f}.sha256" >/dev/null 2>&1 && ok "sha256 verifies" || bad "sha256"
 zcat "$f" | grep -q "mock pg dump" && ok "backup content real" || bad "backup content"
 

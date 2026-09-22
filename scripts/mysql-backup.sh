@@ -10,7 +10,7 @@ BACKUP_DIR="${BACKUP_DIR:-./backups}"
 mkdir -p "$BACKUP_DIR"
 
 TS="$(date +%Y%m%d-%H%M%S)"
-OUT="$BACKUP_DIR/${MYSQL_DATABASE}-${TS}.sql.gz"
+OUT="$BACKUP_DIR/mysql-${MYSQL_DATABASE}-${TS}.sql.gz"
 
 mysqldump -h "${MYSQL_HOST:-127.0.0.1}" -P "${MYSQL_PORT:-3306}" \
   -u "${MYSQL_USER:?set MYSQL_USER}" -p"${MYSQL_PASSWORD:?set MYSQL_PASSWORD}" \
